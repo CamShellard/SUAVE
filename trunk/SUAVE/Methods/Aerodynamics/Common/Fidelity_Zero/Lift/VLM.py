@@ -21,7 +21,7 @@ from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.compute_RHS_matrix    
 # ----------------------------------------------------------------------
 
 ## @ingroup Methods-Aerodynamics-Common-Fidelity_Zero-Lift 
-def VLM(conditions,settings,geometry,initial_timestep_offset = 0 ,wake_development_time = 0.05 ):
+def VLM(conditions,settings,geometry,initial_timestep_offset = 0 ,wake_development_time = 0.05,number_of_timesteps = 30):
     """Uses the vortex lattice method to compute the lift, induced drag and moment coefficients  
 
     Assumptions:
@@ -140,7 +140,8 @@ def VLM(conditions,settings,geometry,initial_timestep_offset = 0 ,wake_developme
    
     # Build the vector
     RHS  ,Vx_ind_total , Vz_ind_total , V_distribution , dt = compute_RHS_matrix(n_sw,n_cw,delta,phi,conditions,geometry,\
-                                                                                 pwm,initial_timestep_offset,wake_development_time ) 
+                                                                                 pwm,initial_timestep_offset,wake_development_time,
+                                                                                 number_of_timesteps ) 
     
     # Spersonic Vortex Lattice - Validated from NASA CR, page 3 
     locs = np.where(mach>1)[0]
