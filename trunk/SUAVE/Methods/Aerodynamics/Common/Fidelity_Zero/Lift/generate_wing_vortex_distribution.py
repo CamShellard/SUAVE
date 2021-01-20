@@ -1103,10 +1103,8 @@ def generate_fuselage_vortex_distribution(VD,fus,n_cw,n_sw):
 ## @ingroup Methods-Aerodynamics-Common-Fidelity_Zero-Lift
 def compute_panel_area(VD):
     """ This computed the area of the panels on the lifting surface of the vehicle 
-
     Assumptions: 
     None
-
     Source:   
     None
     
@@ -1124,5 +1122,34 @@ def compute_panel_area(VD):
     P2P4 = np.array([VD.XB2 - VD.XB1,VD.YB2 - VD.YB1,VD.ZB2 - VD.ZB1]).T   
     
     # compute area of quadrilateral panel
-    A_panel = 0.5*(np.linalg.norm(np.cross(P1P2,P1P3)) + np.linalg.norm(np.cross(P2P3, P2P4)))
+    A_panel = 0.5*(np.linalg.norm(np.cross(P1P2,P1P3),axis=1) + np.linalg.norm(np.cross(P2P3, P2P4),axis=1))
+    
     return A_panel
+
+## @ingroup Methods-Aerodynamics-Common-Fidelity_Zero-Lift
+def compute_unit_normal(VD):
+    """ This computed the unit normal vector of each panel
+     Assumptions: 
+    None
+     Source:   
+    None
+    
+    Inputs:   
+    VD                   - vortex distribution    
+    
+    Properties Used:
+    N/A
+    """     
+
+     # create vectors for panel
+    P1P2 = np.array([VD.XB1 - VD.XA1,VD.YB1 - VD.YA1,VD.ZB1 - VD.ZA1]).T
+    P1P3 = np.array([VD.XA2 - VD.XA1,VD.YA2 - VD.YA1,VD.ZA2 - VD.ZA1]).T
+
+    cross = np.cross(P1P2,P1P3) 
+
+    unit_normal = (cross.T / np.linalg.norm(cross,axis=1)).T
+
+     # adjust Z values, no values should point down, flip vectors if so
+    unit_normal[unit_normal[:,2]<0,:] = -unit_normal[unit_normal[:,2]<0,:]
+
+    return unit_normal

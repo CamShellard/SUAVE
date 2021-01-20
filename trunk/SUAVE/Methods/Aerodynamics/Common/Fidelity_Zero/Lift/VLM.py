@@ -13,7 +13,7 @@
 import numpy as np 
 from SUAVE.Core import Data
 from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.compute_wing_induced_velocity      import compute_wing_induced_velocity
-from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.generate_wing_vortex_distribution  import generate_wing_vortex_distribution
+from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.generate_wing_vortex_distribution  import generate_wing_vortex_distribution, compute_unit_normal, compute_panel_area
 from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.compute_RHS_matrix                 import compute_RHS_matrix 
 
 # ----------------------------------------------------------------------
@@ -155,64 +155,99 @@ def VLM(conditions,settings,geometry):
     u        = np.sum(C_mn[:,:,:,0]*gamma_3d, axis = 2)  
     w_ind    = -np.sum(DW_mn[:,:,:,2]*gamma_3d, axis = 2) 
      
-    # ---------------------------------------------------------------------------------------
-    # STEP 10: Compute aerodynamic coefficients 
-    # ------------------ ---------------------------------------------------------------------  
-    n_w        = VD.n_w
-    CS         = VD.CS*ones
-    CS_w       = np.array(np.array_split(CS,n_w,axis=1)) 
-    wing_areas = np.array(VD.wing_areas)
+    ## ---------------------------------------------------------------------------------------
+    ## STEP 10: Compute aerodynamic coefficients 
+    ## ------------------ ---------------------------------------------------------------------  
+    #n_w        = VD.n_w
+    #CS         = VD.CS*ones
+    #CS_w       = np.array(np.array_split(CS,n_w,axis=1)) 
+    #wing_areas = np.array(VD.wing_areas)
     X_M        = np.ones(n_cp)*x_m  *ones
-    CL_wing    = np.zeros(n_w)
-    CDi_wing   = np.zeros(n_w) 
+    #CL_wing    = np.zeros(n_w)
+    #CDi_wing   = np.zeros(n_w) 
     Del_Y      = np.abs(VD.YB1 - VD.YA1)*ones  
     
-    # Use split to divide u, w, gamma, and Del_y into more arrays
-    u_n_w        = np.array(np.array_split(u,n_w,axis=1))  
-    w_ind_n_w_sw = np.array(np.array_split(w_ind,n_w*n_sw,axis=1))    
-    gamma_n_w    = np.array(np.array_split(gamma,n_w,axis=1))
-    gamma_n_w_sw = np.array(np.array_split(gamma,n_w*n_sw,axis=1))
-    Del_Y_n_w    = np.array(np.array_split(Del_Y,n_w,axis=1))
-    Del_Y_n_w_sw = np.array(np.array_split(Del_Y,n_w*n_sw,axis=1)) 
+    ## Use split to divide u, w, gamma, and Del_y into more arrays
+    #u_n_w        = np.array(np.array_split(u,n_w,axis=1))  
+    #w_ind_n_w_sw = np.array(np.array_split(w_ind,n_w*n_sw,axis=1))    
+    #gamma_n_w    = np.array(np.array_split(gamma,n_w,axis=1))
+    #gamma_n_w_sw = np.array(np.array_split(gamma,n_w*n_sw,axis=1))
+    #Del_Y_n_w    = np.array(np.array_split(Del_Y,n_w,axis=1))
+    #Del_Y_n_w_sw = np.array(np.array_split(Del_Y,n_w*n_sw,axis=1)) 
     
-    # --------------------------------------------------------------------------------------------------------
-    # LIFT                                                                          
-    # --------------------------------------------------------------------------------------------------------    
-    # lift coefficients on each wing   
-    machw             = np.tile(mach,len(wing_areas))     
-    L_wing            = np.sum(np.multiply(u_n_w+1,(gamma_n_w*Del_Y_n_w)),axis=2).T
-    CL_wing           = L_wing/(0.5*wing_areas)
+    ## --------------------------------------------------------------------------------------------------------
+    ## LIFT                                                                          
+    ## --------------------------------------------------------------------------------------------------------    
+    ## lift coefficients on each wing   
+    #machw             = np.tile(mach,len(wing_areas))     
+    #L_wing            = np.sum(np.multiply(u_n_w+1,(gamma_n_w*Del_Y_n_w)),axis=2).T
+    #CL_wing           = L_wing/(0.5*wing_areas)
     
-    # Calculate spanwise lift 
-    spanwise_Del_y    = Del_Y_n_w_sw[:,:,0]
-    spanwise_Del_y_w  = np.array(np.array_split(Del_Y_n_w_sw[:,:,0].T,n_w,axis = 1))
+    ## Calculate spanwise lift 
+    #spanwise_Del_y    = Del_Y_n_w_sw[:,:,0]
+    #spanwise_Del_y_w  = np.array(np.array_split(Del_Y_n_w_sw[:,:,0].T,n_w,axis = 1))
     
-    cl_y              = (2*(np.sum(gamma_n_w_sw,axis=2)*spanwise_Del_y).T)/CS
-    cl_y_w            = np.array(np.array_split(cl_y ,n_w,axis=1)) 
+    #cl_y              = (2*(np.sum(gamma_n_w_sw,axis=2)*spanwise_Del_y).T)/CS
+    #cl_y_w            = np.array(np.array_split(cl_y ,n_w,axis=1)) 
     
-    # total lift and lift coefficient
-    L                 = np.atleast_2d(np.sum(np.multiply((1+u),gamma*Del_Y),axis=1)).T 
-    CL                = L/(0.5*Sref)   # validated form page 402-404, aerodynamics for engineers
+    ## total lift and lift coefficient
+    #L                 = np.atleast_2d(np.sum(np.multiply((1+u),gamma*Del_Y),axis=1)).T 
+    #CL                = L/(0.5*Sref)   # validated form page 402-404, aerodynamics for engineers
     
-    # --------------------------------------------------------------------------------------------------------
-    # DRAG                                                                          
-    # --------------------------------------------------------------------------------------------------------         
-    # drag coefficients on each wing   
-    w_ind_sw_w        = np.array(np.array_split(np.sum(w_ind_n_w_sw,axis = 2).T ,n_w,axis = 1))
-    Di_wing           = np.sum(w_ind_sw_w*spanwise_Del_y_w*cl_y_w*CS_w,axis = 2) 
-    CDi_wing          = Di_wing.T/(wing_areas)  
+    ## --------------------------------------------------------------------------------------------------------
+    ## DRAG                                                                          
+    ## --------------------------------------------------------------------------------------------------------         
+    ## drag coefficients on each wing   
+    #w_ind_sw_w        = np.array(np.array_split(np.sum(w_ind_n_w_sw,axis = 2).T ,n_w,axis = 1))
+    #Di_wing           = np.sum(w_ind_sw_w*spanwise_Del_y_w*cl_y_w*CS_w,axis = 2) 
+    #CDi_wing          = Di_wing.T/(wing_areas)  
     
-    # total drag and drag coefficient 
-    spanwise_w_ind    = np.sum(w_ind_n_w_sw,axis=2).T    
-    D                 = np.sum(spanwise_w_ind*spanwise_Del_y.T*cl_y*CS,axis = 1) 
-    cdi_y             = spanwise_w_ind*spanwise_Del_y.T*cl_y*CS
-    CDi               = np.atleast_2d(D/(Sref)).T  
+    ## total drag and drag coefficient 
+    #spanwise_w_ind    = np.sum(w_ind_n_w_sw,axis=2).T    
+    #D                 = np.sum(spanwise_w_ind*spanwise_Del_y.T*cl_y*CS,axis = 1) 
+    #cdi_y             = spanwise_w_ind*spanwise_Del_y.T*cl_y*CS
+    #CDi               = np.atleast_2d(D/(Sref)).T  
     
     # --------------------------------------------------------------------------------------------------------
     # PRESSURE                                                                      
-    # --------------------------------------------------------------------------------------------------------          
-    L_ij              = np.multiply((1+u),gamma*Del_Y) 
-    CP                = L_ij/VD.panel_areas  
+    # --------------------------------------------------------------------------------------------------------
+
+    LE_A_pts    = VD.XA1[0::n_cw]
+    LE_B_pts    = VD.XB1[0::n_cw]
+    LE          = (LE_A_pts+LE_B_pts)/2
+    LE          = np.repeat(LE,n_cw)
+    TE          = (VD.XB_TE + VD.XA_TE)/2
+    chord       = TE-LE    
+    panel_areas = compute_panel_area(VD)
+    cosalpha    = np.cos(aoa)
+    sinalpha    = np.sin(aoa)
+    CP          = 2*gamma*cosalpha*n_cw/chord
+    
+    n_w         = VD.n_w   
+    normals     = compute_unit_normal(VD)
+    normals     = np.broadcast_to(normals,(len(mach),n_cp,3))
+    wing_areas  = np.array(VD.wing_areas)
+    
+    force_per_panel = np.atleast_3d(panel_areas*CP)
+    dir_f_panel     = force_per_panel*normals
+    cosalpha        = np.cos(aoa)
+    sinalpha        = np.sin(aoa)
+    
+    lift_force_panel = dir_f_panel[:,:,2]*cosalpha + dir_f_panel[:,:,0]*sinalpha
+    drag_force_panel = dir_f_panel[:,:,2]*sinalpha + dir_f_panel[:,:,0]*cosalpha
+    
+    lift_strip  = np.array(np.split(np.reshape(lift_force_panel,(-1,n_cw)).sum(axis=1),len(mach)))
+    drag_strip  = np.array(np.split(np.reshape(drag_force_panel,(-1,n_cw)).sum(axis=1),len(mach)))
+    chord_strip = np.array(np.split(panel_areas,n_sw*n_w)).sum(axis=1) # area of a chordwise strip
+    
+    cl_y     = lift_strip/chord_strip
+    cdi_y    = drag_strip/chord_strip
+    CL_wing  = np.array(np.split(np.reshape(lift_strip,(-1,n_sw)).sum(axis=1),len(mach)))/wing_areas
+    CDi_wing = np.array(np.split(np.reshape(drag_strip,(-1,n_sw)).sum(axis=1),len(mach)))/wing_areas
+    CL       = np.atleast_2d(np.sum(lift_force_panel,axis=1)/Sref).T
+    CDi      = np.atleast_2d(np.sum(drag_force_panel,axis=1)/Sref).T    
+
+
     
     # --------------------------------------------------------------------------------------------------------
     # MOMENT                                                                        
