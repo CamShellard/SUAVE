@@ -52,7 +52,7 @@ class Propeller(Energy_Component):
         """         
 
         self.tag                       = 'Propeller'          
-        self.number_blades             = 0.0
+        self.number_of_blades             = 0.0
         self.tip_radius                = 0.0
         self.hub_radius                = 0.0
         self.twist_distribution        = 0.0
@@ -159,7 +159,7 @@ class Propeller(Energy_Component):
         """         
            
         #Unpack    
-        B         = self.number_blades
+        B         = self.number_of_blades
         R         = self.tip_radius
         Rh        = self.hub_radius
         beta_0    = self.twist_distribution
