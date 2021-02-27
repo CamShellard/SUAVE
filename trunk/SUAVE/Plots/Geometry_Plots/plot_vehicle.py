@@ -353,7 +353,7 @@ def plot_propeller_geometry(axes,prop,propulsor,propulsor_name):
             origin = propulsor.rotor.origin
     else:
         origin = prop.origin
-    n_points  = 10
+    n_points  = len(prop.radius_distribution)
     af_pts    = (2*n_points)-1
     dim       = len(b)
     num_props = len(origin) 

@@ -70,6 +70,7 @@ class Vortex_Lattice(Aerodynamics):
         self.settings.vortex_distribution            = Data()   
         self.settings.initial_timestep_offset        = 0
         self.settings.wake_development_time          = 0.05
+        self.settings.number_of_wake_timesteps       = 30
 
         # conditions table, used for surrogate model training
         self.training                                = Data()    
