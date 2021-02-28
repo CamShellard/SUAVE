@@ -303,7 +303,7 @@ class Vortex_Lattice(Aerodynamics):
         
         # Evaluate the VLM
         # if in transonic regime, use surrogate
-        inviscid_lift, inviscid_drag, wing_lifts, wing_drags, wing_lift_distribution , wing_drag_distribution , pressure_coefficient ,vel_profile = \
+        inviscid_lift, inviscid_drag, wing_lifts, wing_drags, wing_lift_distribution , wing_drag_distribution, induced_angle_distribution , pressure_coefficient ,vel_profile = \
             calculate_VLM(conditions,settings,geometry)
         
         # Lift 
@@ -319,6 +319,7 @@ class Vortex_Lattice(Aerodynamics):
         conditions.aerodynamics.drag_breakdown.induced.inviscid        = inviscid_drag     
         conditions.aerodynamics.drag_breakdown.induced.inviscid_wings  = wing_drags
         conditions.aerodynamics.drag_breakdown.induced.wings_sectional = wing_drag_distribution 
+        conditions.aerodynamics.drag_breakdown.induced.angle           = induced_angle_distribution  
         
         # Pressure
         conditions.aerodynamics.pressure_coefficient                   = pressure_coefficient
@@ -578,7 +579,7 @@ def calculate_VLM(conditions,settings,geometry):
     wing_lifts = Data()
     wing_drags = Data()
     
-    total_lift_coeff,total_induced_drag_coeff, CM, CL_wing, CDi_wing, cl_y , cdi_y , CPi , vel_profile = VLM(conditions,settings,geometry)
+    total_lift_coeff,total_induced_drag_coeff, CM, CL_wing, CDi_wing, cl_y , cdi_y ,alpha_i, CPi , vel_profile = VLM(conditions,settings,geometry)
 
     # Dimensionalize the lift and drag for each wing
     areas = geometry.vortex_distribution.wing_areas

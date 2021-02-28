@@ -185,8 +185,7 @@ def VLM(conditions,settings,geometry):
      
     L_y               = np.sum(np.array(np.array_split(np.multiply((1+u),gamma),n_w*n_sw,axis=1)),axis =2 ).T
     Cl_y_sw           = L_y/(0.5*CS)
-    Cl_y              = np.swapaxes( np.array(np.array_split(Cl_y_sw,n_w,axis=1))  ,0,1) 
-     
+    Cl_y              = np.swapaxes( np.array(np.array_split(Cl_y_sw,n_w,axis=1))  ,0,1)  
     
     # total lift and lift coefficient
     L                 = np.atleast_2d(np.sum(np.multiply((1+u),gamma*Del_Y),axis=1)).T 
@@ -195,60 +194,20 @@ def VLM(conditions,settings,geometry):
     # --------------------------------------------------------------------------------------------------------
     # DRAG                                                                          
     # --------------------------------------------------------------------------------------------------------         
-    # drag coefficients on each wing    
-    spanwise_Del_y    = Del_Y_n_w_sw[:,:,0]
-    spanwise_Del_y_w  = np.array(np.array_split(Del_Y_n_w_sw[:,:,0].T,n_w,axis = 1))     
-    cl_y              = (2*(np.sum(gamma_n_w_sw,axis=2)*spanwise_Del_y).T) / (0.5*CS)
-    cl_y_w            = np.array(np.array_split(cl_y ,n_w,axis=1))      
+    # drag coefficients on each wing     
+    spanwise_Del_y_w  = np.array(np.array_split(Del_Y_n_w_sw[:,:,0].T,n_w,axis = 1))      
+    cl_y_w            = np.array(np.array_split(Cl_y_sw,n_w,axis=1))
     w_ind_sw_w        = np.array(np.array_split(np.sum(w_ind_n_w_sw,axis = 2).T ,n_w,axis = 1))
     Di_wing           = np.sum(w_ind_sw_w*spanwise_Del_y_w*cl_y_w*CS_w,axis = 2) 
     CDi_wing          = Di_wing.T/(wing_areas)  
     
     # total drag and drag coefficient 
     spanwise_w_ind    = np.sum(w_ind_n_w_sw,axis=2).T    
-    D                 = np.sum(spanwise_w_ind*cl_y*CS,axis = 1)  
-    CDi               = np.atleast_2d(D/(Sref)).T  
- 
-    alpha_i        =  np.zeros_like(Cl_y_sw)
-    Cdi_y          =  np.zeros_like(Cl_y_sw) 
-    wing_idx_start = 0
-    wing_idx_end   = 1
-    for wing in geometry.wings: 
-        b       = wing.spans.projected
-        Cl_y_spanwise           = np.zeros((len(aoa),n_sw*(wing.symmetric+1)))
-        Cl_y_spanwise[:,0:n_sw] = np.flip(Cl_y_sw[:,wing_idx_start*n_sw:wing_idx_end*n_sw], axis = 1)
-        span                    = np.flip(VD.Y_SW[wing_idx_start*n_sw:wing_idx_end*n_sw], axis = 0) 
-        c                       = np.flip(VD.CS[wing_idx_start*n_sw:wing_idx_end*n_sw], axis = 0)
-        if wing.symmetric: 
-            span2                  = VD.Y_SW[wing_idx_end*n_sw:(wing_idx_end + wing.symmetric)*n_sw] 
-            c2                     = VD.CS[wing_idx_end*n_sw:(wing_idx_end + wing.symmetric)*n_sw] 
-            span                   = np.concatenate([span,span2])
-            c                      = np.concatenate([c,c2]) 
-            Cl_y_spanwise[:,n_sw:] = Cl_y_sw[:,wing_idx_end*n_sw:(wing_idx_end + wing.symmetric)*n_sw] 
-            wing_idx_end += wing.symmetric 
-            
-        alpha_i_vals = np.zeros((len(aoa),len(span)))
-        Cdi_y_vals   = np.zeros((len(aoa),len(span))) 
-        for i in range(len(span)): 
-            integral          = (-1/(8*np.pi))*Cl_y_spanwise[:,wing_idx_start*n_sw:wing_idx_end*n_sw]*c[wing_idx_start*n_sw:wing_idx_end*n_sw]/((span[i] - span)**2)
-            indices           = ~np.isinf(integral) & ~np.isnan(integral)
-            alpha_i_vals[:,i] = np.trapz(np.reshape(integral[indices],(len(aoa),len(span)-1)), x = span[indices[0]], axis= 1)/b
-            Cdi_y_vals[:,i]   = Cl_y_spanwise[:,i]*np.sin(alpha_i_vals[:,i])    # alpha_i_vals[:,i]*Cl_y_spanwise[:,i]
-            
-        if wing.symmetric:  # reverse array so consistent with Cl y
-            alpha_i[:,wing_idx_start*n_sw:wing_idx_end*n_sw] =  np.concatenate(( np.flip(alpha_i_vals[:,0:n_sw],axis= 1) ,alpha_i_vals[:,n_sw:]),axis = 1)   
-            Cdi_y[:,wing_idx_start*n_sw:wing_idx_end*n_sw]   =  np.concatenate(( np.flip(Cdi_y_vals[:,0:n_sw],axis= 1)   ,Cdi_y_vals[:,n_sw:]),axis = 1)   
-        
-        else: 
-            alpha_i[:,wing_idx_start*n_sw:wing_idx_end*n_sw] = np.flip(alpha_i_vals[:,0:n_sw],axis= 1)
-            Cdi_y[:,wing_idx_start*n_sw:wing_idx_end*n_sw]   = np.flip(Cdi_y_vals[:,0:n_sw],axis= 1)  
-        
-        wing_idx_start = wing_idx_end   
-        wing_idx_end += 1 
-    
-    alpha_i = np.swapaxes( np.array(np.array_split(alpha_i,n_w,axis=1))  ,0,1) 
-    Cdi_y   = np.swapaxes( np.array(np.array_split(Cdi_y,n_w,axis=1))  ,0,1)  
-    
+    D                 = np.sum(spanwise_w_ind*Cl_y_sw,axis = 1) 
+    alpha_i           = np.swapaxes(w_ind_sw_w*spanwise_Del_y_w,0,1) 
+    Cdi_y             = np.sin(alpha_i)*Cl_y 
+    CDi               = np.atleast_2d(D/(Sref)).T   
+   
     # --------------------------------------------------------------------------------------------------------
     # PRESSURE                                                                      
     # --------------------------------------------------------------------------------------------------------          
